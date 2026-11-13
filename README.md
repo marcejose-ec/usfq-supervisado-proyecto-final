@@ -18,23 +18,27 @@ baños, parqueaderos, ubicación, amenidades).
 
 Todo el proyecto está en el notebook [`proyecto_ml_casas_quito.ipynb`](proyecto_ml_casas_quito.ipynb):
 
-1. **EDA**: calidad de datos, distribución del precio, correlaciones, Quito vs. valles, mapa de precios y atípicos.
-2. **Pipeline de scikit-learn**: imputación → escalado / one-hot → selección de características tipo filtro
-   (`SelectPercentile` + `f_regression`) → modelo, con el objetivo en escala logarítmica
-   (`TransformedTargetRegressor`).
-3. **Optimización de hiperparámetros** con [Optuna](https://optuna.org) y *repeated k-fold CV*, más curvas de
+1. **EDA**: calidad de datos, valores anómalos, distribución del precio (≈ log-normal), relación precio–área, Quito
+   vs. valles, sectores y suavidad espacial del precio, fuentes, faltantes informativos y amenidades.
+2. **Objetivo en escala log**: se modela log(precio) y la métrica es el **RMSLE**. Los resultados finales también se
+   reportan en USD.
+3. **Pipeline de scikit-learn** común a todos los modelos: log de áreas, imputación con indicadores de faltante,
+   coordenadas faltantes completadas con el centroide del sector (transformador propio), escalado, one-hot y
+   selección de características tipo filtro (`SelectPercentile` + `f_regression`).
+4. **Optimización de hiperparámetros** con [Optuna](https://optuna.org) y *repeated k-fold CV*, más curvas de
    validación y de aprendizaje.
-4. **Comparación estadística** entre HistGradientBoosting y Random Forest con *repeated k-fold* 10×10: prueba de
-   Wilcoxon y t-test pareado corregido (Nadeau & Bengio).
-5. **Evaluación final** en un conjunto de prueba reservado (RMSE, MAE, MAPE, R²).
-6. **t-SNE** del espacio de características coloreado por precio.
+5. **Comparación estadística: MLP vs. Random Forest** con *repeated k-fold* 10×10, usando la prueba de Wilcoxon y el
+   t-test pareado corregido (Nadeau & Bengio). Ridge (modelo hedónico lineal) sirve de referencia.
+6. **Evaluación final** en un conjunto de prueba reservado (RMSLE, MAPE, MAE en USD).
+7. **t-SNE** del espacio de características coloreado por precio y por zona.
 
 ## Resultados
 
-| Modelo | RMSE test (USD) | MAPE test (%) | R² |
+| Modelo | RMSLE test | MAPE test (%) | Error mediano (USD) |
 |---|---|---|---|
-| HistGradientBoosting | _TODO_ | _TODO_ | _TODO_ |
+| MLP | _TODO_ | _TODO_ | _TODO_ |
 | Random Forest | _TODO_ | _TODO_ | _TODO_ |
+| Ridge (referencia) | _TODO_ | _TODO_ | _TODO_ |
 
 Resultado de la comparación estadística: _TODO_.
 
@@ -74,4 +78,4 @@ jupyter lab proyecto_ml_casas_quito.ipynb
 ```
 
 Con `MODO_RAPIDO = True` el notebook corre de principio a fin en pocos minutos para pruebas. Los resultados
-finales se obtienen con `MODO_RAPIDO = False` (Optuna con 60 *trials*, comparación 10×10).
+finales se obtienen con `MODO_RAPIDO = False` (Optuna con 60 *trials* por modelo, comparación 10×10).
