@@ -156,7 +156,7 @@ every row by hand:
 - **`coord_aproximada` flag** (proposed, not implemented). Flag points shared by ≥5 listings from different
   agencies (and arriendayvende pins). Clear coordinates far from their sector's median.
 - Read icasas' and RE/MAX's terms before publishing the dataset outside the course.
-- After creating the GitHub repo: replace `USUARIO/REPO` in the README Colab badge and the notebook's `DATA_URL`.
+- GitHub remote: `origin` = https://github.com/marcejose-ec/usfq-supervisado-proyecto-final (placeholders in the README badge and `DATA_URL` already replaced). `DATA_URL` only works from Colab if the repo is public.
 
 ## Reproduce
 

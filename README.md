@@ -6,7 +6,7 @@ Modelo de regresión que predice el precio de venta (USD) de casas y departament
 Quito, incluidos los valles de Cumbayá, Tumbaco y Los Chillos, a partir de sus características (área, habitaciones,
 baños, parqueaderos, ubicación, amenidades).
 
-[![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/USUARIO/REPO/blob/main/proyecto_ml_casas_quito.ipynb)
+[![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/marcejose-ec/usfq-supervisado-proyecto-final/blob/main/proyecto_ml_casas_quito.ipynb)
 
 ## Integrantes
 
