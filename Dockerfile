@@ -4,9 +4,10 @@
 FROM python:3.12-slim
 
 # HOME=/tmp: el contenedor corre con el usuario del host, que no tiene home dentro de la imagen.
+# (No fijar MPLBACKEND: anularía el backend inline de Jupyter y el notebook quedaría sin figuras.)
 # *_NUM_THREADS=1: el paralelismo viene de los folds de CV (N_JOBS); sin esto cada proceso abriría varios hilos
 # de BLAS/OpenMP y la carga superaría los núcleos asignados.
-ENV PYTHONDONTWRITEBYTECODE=1 PIP_NO_CACHE_DIR=1 HOME=/tmp MPLBACKEND=Agg \
+ENV PYTHONDONTWRITEBYTECODE=1 PIP_NO_CACHE_DIR=1 HOME=/tmp \
     OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
 
 WORKDIR /work
