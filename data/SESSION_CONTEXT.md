@@ -1,6 +1,6 @@
 # Data-gathering session context
 
-Notes from the Claude Code session (2026-11-11 → 2026-11-12) that built `data/casas_quito.csv`. It records what
+Notes from the Claude Code sessions (2026-11-11 → 2026-11-12) that built and then corrected `data/casas_quito.csv`. It records what
 was decided and why, what was tried and rejected, and what is still open, so a later session (human or agent)
 can extend or rebuild the dataset without re-researching everything. The user-facing documentation of the
 dataset itself (column dictionary, cleaning counts, references) is in [`README.md`](README.md).
@@ -15,7 +15,9 @@ flagged, not deleted; no imputation (NaN kept); `fuente` + `id` + `url` on every
 
 ## Result (last build: 2026-11-12)
 
-7,151 rows × 48 columns. Rebuilding from the raw files is deterministic (same 7,151 rows).
+7,151 rows × 49 columns. Rebuilding from the raw files is deterministic and byte-identical: the scrape date
+(`FECHA_SCRAPING = "2026-11-12"`) and the year used for building age (`ANIO_REFERENCIA = 2026`) are constants, not
+`date.today()`.
 
 | Source | Rows | How |
 |---|---|---|
@@ -27,11 +29,14 @@ flagged, not deleted; no imputation (NaN kept); `fuente` + `id` + `url` on every
 
 | Zone | Houses | Apartments | Median USD/m² |
 |---|---|---|---|
-| quito_urbano | 1,287 | 2,391 | 807 |
+| quito_urbano | 1,298 | 2,411 | 808 |
 | valle_cumbaya_tumbaco | 1,065 | 630 | 1,188 |
-| valle_los_chillos | 1,008 | 192 | 731 |
+| valle_los_chillos | 997 | 172 | 725 |
 | norte_pomasqui_calderon | 496 | 75 | 599 |
 | rural_otro / NA | 6 / 1 | 0 | – |
+
+`quito_urbano` means the city of Quito (urban parishes). The valleys and the rural parishes of the DMQ are separate
+zones.
 
 Highest missing rates: `area_terreno_m2` 72% overall (≈49% among houses), `antiguedad_anios` 58%,
 `estado` 59%, `alicuota` 76%, `piso` 79%. Required columns are all under 7% missing.
@@ -75,24 +80,32 @@ Highest missing rates: `area_terreno_m2` 72% overall (≈49% among houses), `ant
    parking, alícuota, year/age, floor), plus 17 amenity flags from text and feature lists.
 3. Sanity filters: price present, not a placeholder (1, 999999, > $10M), ≥ $15,000 (drops rentals posted as
    sales), built area 20–2,000 m², coordinates inside the DMQ+Rumiñahui box, else set to NaN.
+3b. Builder projects get coordinates and sector fixes from `data/coordenadas_proyectos.csv` (joined on
+   url + normalized sector, because one corporacionvyasa.com URL lists two projects); `coord_origen` records
+   the origin. Then a small alias map merges spellings normalization can't (`Bellavista de la Viña` →
+   `Bella Vista de la Viña`).
 4. Sector spellings unified to the most frequent accented variant. Missing sector is inferred from the nearest
    listing with a sector within 1.5 km (`sector_inferido = 1`, 1,336 rows).
 5. `zona`: explicit name lists → substring match → coordinate bands → default `quito_urbano` → majority zone
-   per sector.
+   per sector → canton Rumiñahui always `valle_los_chillos` (applied after the majority vote).
 6. Dedup on tipo + precio + round(area) + hab + baños, priority remax > icasas > arriendayvende > builders
    (36 cross-source duplicates).
 7. `precio_m2` and `outlier_precio_m2` (IQR on log USD/m², per tipo, 67 rows flagged, none removed).
 
 Bugs fixed along the way, in case they reappear: the lot-area regex grabbing built area ("300 m² de terreno 280 m²
 de construcción"); Calderón-area barrios and Trivo sectors like "Viña Alta (Tumbaco)" landing in the wrong zone; a
-pandas `DTypePromotionError` with `fillna(np.where(...))`.
+pandas `DTypePromotionError` with `fillna(np.where(...))`. Later (2026-11-12): "rumipamba" was in the Los Chillos
+list, but 31 listings are the urban Quito parish (Av. República), so it moved to `quito_urbano` and the canton
+rule now handles the Rumiñahui one. Monteserrín, Lomas de Monteserrín and Campo Alegre are listed explicitly as
+`quito_urbano`, because the −78.455 longitude band runs through them and adding project points flipped 23 rows.
 
 ## Known data caveats
 
 - **Coordinates are often approximate.** RE/MAX pins are mostly unique. About 22% of icasas rows and 29% of
   arriendayvende rows sit on shared neighborhood centroids (e.g. 62 Tumbaco listings from 18 agencies on one
-  point). arriendayvende also has a mispinned Ponceano cluster. Builder rows almost never have coordinates.
-  **No row is guaranteed to have the exact location.**
+  point). arriendayvende also has a mispinned Ponceano cluster. Builder rows carry the **project** location
+  (not the unit's). 20 rows still have no coordinates (17 arriendayvende, barrazueta, the vyasa Bellavista row,
+  ryp); the notebook gives them their sector's centroid. **No row is guaranteed to have the exact location.**
 - Prices are asking prices, not transaction prices.
 - New builds (`es_desarrollo = 1`, 389 rows) are priced well above resale: median USD/m² for houses is 1,433 vs
   728, and for apartments 1,979 vs 955. Keep the flag as a feature.
@@ -105,16 +118,45 @@ pandas `DTypePromotionError` with `fillna(np.where(...))`.
 - No personal data of agents or sellers stored.
 - Repo layout: the workspace root (`proyecto-final/`) is scratch space where stray files are fine;
   `casas-quito-ml/` is the deliverable. The bulk raw dumps (`data/raw/*`) are git-ignored except `raw/constructoras/`.
-- Commits are the user's call; nothing was committed in this session.
+- Commits are the user's call. First commit: `190798a` (2026-11-12), no remote yet.
+
+## Project coordinates (`coordenadas_proyectos.csv`)
+
+The 401 rows without coordinates were nearly all builder projects. Every Trivo project page embeds a Google Maps
+iframe with the project pin (`maps/embed/v1/place?q=lat,lon`); Quiari (alvarezbravo) links a Google Maps place.
+Google Maps itself can't be fetched (JS-only), so the pins were read from the builder pages. The user reviewed
+every row by hand:
+- **Taya**: the page pin was ~17 km off (western Quito); replaced with the brochure location [ref 8 in README].
+- **Yanazarapata** (vyasa, no map on the page): first an OSM Nominatim centroid, replaced with the user's
+  Google Maps location (−0.208268, −78.453037). The Google place pin is ~85 m away; **the user chose to keep
+  their coordinates.**
+- **Zadeh, Maigua**: `Campo Alegre` → `Monteserrin` (Campo Alegre is a private urbanization in Monteserrín).
+- **Quartier**: not in Cumbayá (user). Assigned `La Morita` because its pin is ~70 m from Xoul (La Morita);
+  that's an inference from the pin, not something the page states.
+
+## Notebook / EDA decisions so far
+
+- The notebook uses the dataset's `zona` and all binary flags (incl. `es_desarrollo`, `precio_es_desde`) and adds
+  `es_rentera` (houses whose text says "rentera"/"se vende edificio"/"N departamentos independientes", or with
+  ≥10 bedrooms; 387 rows). Words like "edificio" or "rentabilidad" alone matched hundreds of apartments.
+- Notebook cleaning (not in the dataset): `banos > 30`, apartments with > 10 bedrooms, and houses with 0
+  bedrooms → NaN; 80 more near-duplicates (tipo + sector + precio + area) dropped.
+- `fuente` is **not** a feature (traceability/filtering only). Within the same sector and type, RE/MAX is ~15%
+  below, Trivo ~10% above; no source looked unreliable enough to drop.
+- Price is ≈ log-normal (skew 6.0 → 0.5 in log); the model trains on log(price).
+- Sector explains η² = 0.43 of log(USD/m²), zone 0.15; neighbouring sectors correlate r = 0.77.
+- The Trivo project grouping (units of one project across folds) is accepted as a limitation (plain
+  `RepeatedKFold`).
 
 ## Open items
 
-- **`coord_aproximada` flag** (proposed, not implemented; awaiting the user's decision). Flag points shared by ≥5
-  listings from different agencies (and arriendayvende pins). Clear coordinates far from their sector's median.
-- Notebook (not modified): could use the dataset's `zona` instead of its own `zona_general`, and add
-  `es_desarrollo`, `precio_es_desde` and the extra amenity columns. It must not use `precio_m2` as a feature.
-- `README.md` "Estructura" tree does not list `scraper/` yet.
+- **Pending user decisions:** how to encode `sector` (one-hot vs. sector-centroid coordinates vs. target
+  encoding); whether to keep HistGradientBoosting as one of the two compared models; switching the metric to
+  RMSLE (proposed, not yet applied in the notebook, which still optimizes RMSE in USD).
+- **`coord_aproximada` flag** (proposed, not implemented). Flag points shared by ≥5 listings from different
+  agencies (and arriendayvende pins). Clear coordinates far from their sector's median.
 - Read icasas' and RE/MAX's terms before publishing the dataset outside the course.
+- After creating the GitHub repo: replace `USUARIO/REPO` in the README Colab badge and the notebook's `DATA_URL`.
 
 ## Reproduce
 

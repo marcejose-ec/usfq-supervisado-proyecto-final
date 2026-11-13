@@ -52,7 +52,10 @@ para el diccionario de variables y los pasos de limpieza.
 ├── proyecto_ml_casas_quito.ipynb   # notebook principal (todo el proyecto)
 ├── data/
 │   ├── casas_quito.csv             # dataset
-│   └── README.md                   # fuente y diccionario de variables
+│   ├── coordenadas_proyectos.csv   # coordenadas de proyectos nuevos (revisadas a mano)
+│   ├── README.md                   # fuente y diccionario de variables
+│   └── raw/constructoras/          # datos de constructoras recopilados por agentes
+├── scraper/                        # scripts de scraping y build_dataset.py
 ├── resultados/                     # CSV/JSON generados por el notebook
 └── requirements.txt
 ```
