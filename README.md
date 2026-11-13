@@ -27,7 +27,7 @@ Todo el proyecto está en el notebook [`proyecto_ml_casas_quito.ipynb`](proyecto
    selección de características tipo filtro (`SelectPercentile` + `f_regression`).
 4. **Optimización de hiperparámetros** con [Optuna](https://optuna.org) y *repeated k-fold CV*, más curvas de
    validación y de aprendizaje.
-5. **Comparación estadística: MLP vs. Random Forest** con *repeated k-fold* 10×10, usando la prueba de Wilcoxon y el
+5. **Comparación estadística: MLP (PyTorch Lightning) vs. Random Forest** con *repeated k-fold* 10×10, usando la prueba de Wilcoxon y el
    t-test pareado corregido (Nadeau & Bengio). Ridge (modelo hedónico lineal) sirve de referencia.
 6. **Evaluación final** en un conjunto de prueba reservado (RMSLE, MAPE, MAE en USD).
 7. **t-SNE** del espacio de características coloreado por precio y por zona.
@@ -61,21 +61,35 @@ para el diccionario de variables y los pasos de limpieza.
 │   └── raw/constructoras/          # datos de constructoras recopilados por agentes
 ├── scraper/                        # scripts de scraping y build_dataset.py
 ├── resultados/                     # CSV/JSON generados por el notebook
-└── requirements.txt
+├── Dockerfile                      # entorno para la corrida completa
+└── requirements.txt                # versiones probadas
 ```
 
 ## Cómo ejecutar
 
-**Google Colab (recomendado):** abrir el notebook con el botón de arriba y ejecutar todas las celdas. El dataset se
-descarga desde este repositorio (`DATA_URL` en la sección de configuración).
+**Google Colab:** abrir el notebook con el botón de arriba (se abre con GPU) y ejecutar todas las celdas. La primera
+celda instala Optuna y PyTorch Lightning si faltan, y el dataset se descarga desde este repositorio (`DATA_URL`).
+Con `MODO_RAPIDO = True` corre de principio a fin en pocos minutos.
+
+**Corrida completa en un servidor con Docker** (así se obtuvieron los resultados publicados):
+
+```bash
+git clone https://github.com/marcejose-ec/usfq-supervisado-proyecto-final.git
+cd usfq-supervisado-proyecto-final
+docker build -t casas-quito-ml .
+docker run --rm --cpus=16 -e N_JOBS=16 -u "$(id -u):$(id -g)" -v "$PWD":/work casas-quito-ml
+```
+
+El contenedor ejecuta el notebook y guarda las salidas en el mismo archivo y en `resultados/`. `--cpus` y `N_JOBS`
+limitan los núcleos usados (importante en un servidor compartido). La imagen usa PyTorch solo-CPU: la red es pequeña
+y la GPU no acelera este problema.
 
 **Localmente:**
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements.txt jupyterlab
 jupyter lab proyecto_ml_casas_quito.ipynb
 ```
 
-Con `MODO_RAPIDO = True` el notebook corre de principio a fin en pocos minutos para pruebas. Los resultados
-finales se obtienen con `MODO_RAPIDO = False` (Optuna con 60 *trials* por modelo, comparación 10×10).
+Los resultados finales se obtienen con `MODO_RAPIDO = False` (Optuna con 60 *trials* por modelo, comparación 10×10).

@@ -1,8 +1,13 @@
-numpy
-pandas>=2.0
-scikit-learn>=1.4
-optuna>=3.0
-matplotlib
-seaborn
-scipy
-jupyterlab
+# Versiones probadas (Python 3.11–3.12). En Colab no hace falta instalar esto: el notebook instala lo que falte
+# (Optuna y Lightning). El Dockerfile instala torch en su versión solo-CPU antes de este archivo.
+numpy==2.4.6
+pandas==3.1.1
+scikit-learn==1.9.1
+scipy==1.17.1
+optuna==5.0.0
+matplotlib==3.11.2
+seaborn==0.13.2
+torch==2.15.0
+lightning==2.6.6
+nbconvert==7.17.2
+ipykernel==7.4.0
