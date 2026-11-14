@@ -1,0 +1,21 @@
+{
+  "MLP": {
+    "neuronas_1": 247,
+    "n_capas": 1,
+    "percentile": 90,
+    "weight_decay": 0.008157885249926526,
+    "learning_rate": 0.00016006401564074469,
+    "batch_size": 128
+  },
+  "RandomForest": {
+    "percentile": 100,
+    "n_estimators": 500,
+    "max_depth": 30,
+    "min_samples_leaf": 1,
+    "max_features": 0.37441345664876524
+  },
+  "Ridge": {
+    "percentile": 100,
+    "alpha": 0.784826171410592
+  }
+}
