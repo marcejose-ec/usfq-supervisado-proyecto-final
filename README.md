@@ -34,13 +34,18 @@ Todo el proyecto está en el notebook [`proyecto_ml_casas_quito.ipynb`](proyecto
 
 ## Resultados
 
-| Modelo | RMSLE test | MAPE test (%) | Error mediano (USD) |
-|---|---|---|---|
-| MLP | _TODO_ | _TODO_ | _TODO_ |
-| Random Forest | _TODO_ | _TODO_ | _TODO_ |
-| Ridge (referencia) | _TODO_ | _TODO_ | _TODO_ |
+| Modelo | RMSLE CV 10×10 (media ± d.e.) | RMSLE test | R² test (log) | MAPE test (%) | Error mediano test (USD) |
+|---|---|---|---|---|---|
+| MLP | 0,2849 ± 0,0163 | 0,2949 | 0,818 | 21,1 | 21.530 |
+| Random Forest | 0,2860 ± 0,0166 | 0,2943 | 0,819 | 20,7 | 19.637 |
+| Ridge (referencia) | 0,3024 ± 0,0161 | 0,3151 | 0,792 | 23,2 | 22.241 |
 
-Resultado de la comparación estadística: _TODO_.
+La validación cruzada (*repeated k-fold* 10×10) usa solo el conjunto de entrenamiento (5.652 anuncios); el test es el
+20 % reservado (1.413 anuncios), evaluado una sola vez.
+
+Resultado de la comparación estadística: **no hay diferencia significativa entre MLP y Random Forest** (diferencia
+media de RMSLE −0,0010; Wilcoxon p = 0,164; t-test pareado corregido de Nadeau–Bengio p = 0,639; α = 0,05). Ambos
+superan al modelo lineal de referencia (Ridge).
 
 Las tablas completas se guardan en [`resultados/`](resultados/).
 
