@@ -1,9 +1,10 @@
-# Data-gathering session context
+# Session context
 
-Notes from the Claude Code sessions (2026-11-11 → 2026-11-12) that built and then corrected `data/casas_quito.csv`. It records what
-was decided and why, what was tried and rejected, and what is still open, so a later session (human or agent)
-can extend or rebuild the dataset without re-researching everything. The user-facing documentation of the
-dataset itself (column dictionary, cleaning counts, references) is in [`README.md`](README.md).
+Notes from the Claude Code sessions (2026-11-11 → 2026-11-14) that built `data/casas_quito.csv` and then the
+modeling notebook. It records what was decided and why, what was tried and rejected, and what is still open, so a
+later session (human or agent) can continue without re-researching everything. The user-facing documentation of
+the dataset (column dictionary, cleaning counts, references) is in [`README.md`](README.md); the project overview
+and results table are in the [root README](../README.md).
 
 ## Goal
 
@@ -118,7 +119,7 @@ rule now handles the Rumiñahui one. Monteserrín, Lomas de Monteserrín and Cam
 - No personal data of agents or sellers stored.
 - Repo layout: the workspace root (`proyecto-final/`) is scratch space where stray files are fine;
   `casas-quito-ml/` is the deliverable. The bulk raw dumps (`data/raw/*`) are git-ignored except `raw/constructoras/`.
-- Commits are the user's call. First commit: `190798a` (2026-11-12), no remote yet.
+- Commits and pushes are the user's call (ask first).
 
 ## Project coordinates (`coordenadas_proyectos.csv`)
 
@@ -134,7 +135,11 @@ every row by hand:
 - **Quartier**: not in Cumbayá (user). Assigned `La Morita` because its pin is ~70 m from Xoul (La Morita);
   that's an inference from the pin, not something the page states.
 
-## Notebook / EDA decisions so far
+## Notebook / EDA decisions
+
+The EDA (notebook section 4) runs on the full dataset before the train/test split, so its cleaning rules were
+chosen having seen test rows. The rules are generic and not tuned on scores; it is a known caveat to mention in the
+defense. Fitted preprocessing (imputers, centroids, encoding, selection) is learned per fold inside the Pipeline.
 
 - The notebook uses the dataset's `zona` and all binary flags (incl. `es_desarrollo`, `precio_es_desde`) and adds
   `es_rentera` (houses whose text says "rentera"/"se vende edificio"/"N departamentos independientes", or with
@@ -148,15 +153,72 @@ every row by hand:
 - The Trivo project grouping (units of one project across folds) is accepted as a limitation (plain
   `RepeatedKFold`).
 
-## Open items
+## Modeling decisions
 
-- **Pending user decisions:** how to encode `sector` (one-hot vs. sector-centroid coordinates vs. target
-  encoding); whether to keep HistGradientBoosting as one of the two compared models; switching the metric to
-  RMSLE (proposed, not yet applied in the notebook, which still optimizes RMSE in USD).
-- **`coord_aproximada` flag** (proposed, not implemented). Flag points shared by ≥5 listings from different
-  agencies (and arriendayvende pins). Clear coordinates far from their sector's median.
+- **Models: MLP vs. Random Forest**, with Ridge (log-log hedonic model) as a reference only. HistGradientBoosting
+  was dropped: the user preferred algorithms seen in class. The MLP is written in **PyTorch Lightning**
+  (`DatosPrecios` DataModule, `MLPPrecios` LightningModule, `MejorEstado` callback, `RegresorLightning` sklearn
+  adapter) so it fits in the Pipeline, Optuna and `cross_val_score`. The target is standardized inside `fit`;
+  without that the MLP was much worse (RMSLE 0.340 vs. 0.301 in an early test).
+- **Target and metric:** y = log(precio) before the split (stateless, no leakage); metric RMSLE
+  (`neg_root_mean_squared_error` on log y). USD metrics only on the test set.
+- **Sector encoding:** one-hot (`min_frequency=10`, rare sectors grouped) plus coordinates; missing coordinates get
+  the sector centroid learned per fold (`ImputadorCoordenadas`), which also adds the distance to Parque La Carolina.
+- **Pipeline:** log1p of areas/alícuota, `SimpleImputer(add_indicator=True)`, scaling, one-hot,
+  `VarianceThreshold`, `SelectPercentile(f_regression)` with the percentile tuned by Optuna (filter selection).
+- **Validation:** 80/20 split stratified by price deciles (5,652 / 1,413 rows). Optuna TPE with 5×2 repeated
+  k-fold (60 trials; Ridge 20); statistical comparison with 10×10 repeated k-fold, Wilcoxon + Nadeau–Bengio
+  corrected t-test (+ Shapiro on the differences). All of it on the training set only; test used once.
+- Feature extraction (rubric item) does not apply: tabular data, no transfer learning. Say so in the notebook.
+
+## Results (full run, 2026-11-13)
+
+| Model | CV RMSLE 10×10 | Test RMSLE | Test MAPE | Test median error |
+|---|---|---|---|---|
+| MLP | 0.2849 ± 0.0163 | 0.2949 | 21.1% | $21.5k |
+| Random Forest | 0.2860 ± 0.0166 | 0.2943 | 20.7% | $19.6k |
+| Ridge | 0.3024 ± 0.0161 | 0.3151 | 23.2% | $22.2k |
+
+- MLP vs. RF: no significant difference (mean diff −0.0010; Wilcoxon p = 0.164; corrected t p = 0.639).
+- Best params: MLP 1 layer of 247, percentile 90, weight_decay 0.0082, lr 0.00016, batch 128 (best epoch 146 of
+  167); RF 500 trees, depth 30, min_leaf 1, max_features 0.37, percentile 100; Ridge alpha 0.79.
+- Learning curves still falling slowly (more data would help a little); RF nearly memorizes the training set,
+  the MLP has a much smaller train/validation gap. Expensive properties are under-predicted; houses have wider
+  errors than apartments. t-SNE shows clusters by zone.
+- Two full runs gave identical metrics and per-fold scores.
+
+## Running the notebook
+
+- **The executed notebook in the repo is now the source of truth.** It was originally generated by a script in a
+  session scratchpad that no longer exists; edit the notebook directly (Jupyter/Colab). Re-running it overwrites
+  outputs, so keep the full-run outputs committed.
+- The committed notebook has `MODO_RAPIDO = False` (full mode, ~47 min on 16 CPUs). Set it to `True` for a
+  few-minute check in Colab.
+- Full runs used Docker on the university server wslab03 (`docker run --cpus=16 -e N_JOBS=16 ...`, see README).
+  `OMP/OPENBLAS/MKL_NUM_THREADS=1` and `torch.set_num_threads(1)` avoid oversubscription; parallelism comes from
+  CV folds. Do not set `MPLBACKEND=Agg` (the notebook then saves no figures). Don't install anything system-wide on
+  the university servers. On 2026-11-14 the user's venv, the container, the image and the pip cache were removed
+  from wslab03; the repo clone and `~/corrida_sklearn_mlp` (partial results of an abandoned sklearn-MLP run) remain.
+- Results files: `resultados/` (best hyperparameters, Optuna trials, per-fold RMSLE, test metrics).
+
+## Plan / open items
+
+User (team) work before the submission:
+1. Write the `_Comentario:_ TODO` interpretation cells and the conclusions (section 13); fill in team names.
+2. Fill in the AI prompts used, as code comments (rubric: references in IEEE format plus prompts).
+3. Run a quick-mode check in Colab from the README badge, then "Save a copy in Drive" and add the Colab link.
+4. Ask the professor whether running outside Colab (Docker on university servers) and PyTorch Lightning are fine.
+5. Prepare the group defense (expect questions on the EDA-before-split caveat, project grouping across folds,
+   and why the MLP-vs-RF tie is still a valid result).
+
+Optional / later:
+- Move the split before the EDA and rerun (~47 min) if the EDA caveat is a concern.
+- **`coord_aproximada` flag** (proposed, not implemented): flag points shared by ≥5 listings from different
+  agencies (and arriendayvende pins); clear coordinates far from their sector's median.
 - Read icasas' and RE/MAX's terms before publishing the dataset outside the course.
-- GitHub remote: `origin` = https://github.com/marcejose-ec/usfq-supervisado-proyecto-final (placeholders in the README badge and `DATA_URL` already replaced). `DATA_URL` only works from Colab if the repo is public.
+
+Repo: `origin` = https://github.com/marcejose-ec/usfq-supervisado-proyecto-final (branch `main`). `DATA_URL`
+only works from Colab if the repo is public.
 
 ## Reproduce
 
