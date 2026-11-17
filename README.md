@@ -54,6 +54,12 @@ Las tablas completas se guardan en [`resultados/`](resultados/).
 `data/casas_quito.csv`: 7.151 anuncios de venta de casas y departamentos en Quito y los valles, recolectados el 11–12 de noviembre de 2026 de icasas.ec, remax.com.ec, arriendayvende.com, trivo.com.ec y sitios de constructoras (scripts en [`scraper/`](scraper/)). Ver [`data/README.md`](data/README.md)
 para el diccionario de variables y los pasos de limpieza.
 
+> **Aviso:** el dataset no es una muestra representativa del mercado de vivienda de Quito. El portal más grande
+> (plusvalia.com) no se pudo recolectar y la mayor parte del mercado no se publica en internet, así que los datos son
+> un subconjunto no aleatorio: anuncios en línea con precios de oferta. Sirve para un ejercicio de metodología de
+> aprendizaje automático; los modelos de este repositorio **no** están pensados como un predictor práctico del precio
+> de la vivienda en Quito.
+
 ## Estructura
 
 ```
@@ -98,3 +104,11 @@ jupyter lab proyecto_ml_casas_quito.ipynb
 ```
 
 Los resultados finales se obtienen con `MODO_RAPIDO = False` (Optuna con 60 *trials* por modelo, comparación 10×10).
+
+## Uso de IA
+
+El código de este proyecto (scrapers, construcción del dataset, notebook y `Dockerfile`) fue escrito con
+**Claude Opus 5.5** (Anthropic) mediante Claude Code, que también ejecutó el *scraping* y las corridas y redactó un
+primer borrador de las interpretaciones y conclusiones. El alcance, las reglas de dominio, la revisión de los datos y
+las decisiones de modelado fueron del autor. El detalle está en la sección 14 del notebook
+("Transparencia sobre el uso de IA").
