@@ -8,11 +8,9 @@ baños, parqueaderos, ubicación, amenidades).
 
 [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/marcejose-ec/usfq-supervisado-proyecto-final/blob/main/proyecto_ml_casas_quito.ipynb)
 
-## Integrantes
+## Autor
 
-- Nombre 1
-- Nombre 2
-- Nombre 3
+Marcelo Atiaga, con asistencia de Claude Opus 5.5 (ver [Uso de IA](#uso-de-ia)).
 
 ## Metodología
 
