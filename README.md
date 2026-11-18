@@ -41,8 +41,10 @@ Todo el proyecto está en el notebook [`proyecto_ml_casas_quito.ipynb`](proyecto
 La validación cruzada (*repeated k-fold* 10×10) usa solo el conjunto de entrenamiento (5.652 anuncios); el test es el
 20 % reservado (1.413 anuncios), evaluado una sola vez.
 
-Resultado de la comparación estadística: **no hay diferencia significativa entre MLP y Random Forest** (diferencia
-media de RMSLE −0,0010; Wilcoxon p = 0,164; t-test pareado corregido de Nadeau–Bengio p = 0,639; α = 0,05). Ambos
+Resultado de la comparación estadística: **no se encontró evidencia de diferencia entre MLP y Random Forest**
+(diferencia media de RMSLE −0,0010; IC 95 % con varianza corregida [−0,0054; +0,0033]; Wilcoxon p = 0,164; t-test
+pareado corregido de Nadeau–Bengio p = 0,639; α = 0,05). Esto no demuestra que sean equivalentes, pero las diferencias
+compatibles con los datos no superan ≈ 0,5 puntos porcentuales de error. Ambos
 superan al modelo lineal de referencia (Ridge).
 
 Las tablas completas se guardan en [`resultados/`](resultados/).

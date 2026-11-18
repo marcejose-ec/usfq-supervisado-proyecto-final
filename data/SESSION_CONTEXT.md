@@ -179,7 +179,9 @@ defense. Fitted preprocessing (imputers, centroids, encoding, selection) is lear
 | Random Forest | 0.2860 ± 0.0166 | 0.2943 | 20.7% | $19.6k |
 | Ridge | 0.3024 ± 0.0161 | 0.3151 | 23.2% | $22.2k |
 
-- MLP vs. RF: no significant difference (mean diff −0.0010; Wilcoxon p = 0.164; corrected t p = 0.639).
+- MLP vs. RF: no evidence of a difference (mean diff −0.0010; Wilcoxon p = 0.164; corrected t p = 0.639; 95% CI
+  with corrected variance [−0.0054, +0.0033]). Not rejecting H0 is **not** equivalence (no TOST was run); never write
+  "equivalentes" in the notebook.
 - Best params: MLP 1 layer of 247, percentile 90, weight_decay 0.0082, lr 0.00016, batch 128 (best epoch 146 of
   167); RF 500 trees, depth 30, min_leaf 1, max_features 0.37, percentile 100; Ridge alpha 0.79.
 - Learning curves still falling slowly (more data would help a little); RF nearly memorizes the training set,
