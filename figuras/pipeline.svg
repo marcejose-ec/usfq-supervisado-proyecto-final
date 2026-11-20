@@ -1,0 +1,151 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 800" width="980" height="800" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#17262b">
+  <title>Arquitectura del pipeline</title>
+  <defs>
+    <marker id="flecha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4a5b61"/>
+    </marker>
+  </defs>
+  <rect width="980" height="800" fill="#ffffff"/>
+
+  <!-- Entradas -->
+  <rect x="290" y="16" width="400" height="44" rx="6" fill="#ffffff" stroke="#4a5b61"/>
+  <text x="490" y="35" text-anchor="middle" font-size="14" font-weight="bold">X_train: 5.652 anuncios × 36 columnas</text>
+  <text x="490" y="51" text-anchor="middle" fill="#4a5b61">objetivo y = log(precio)</text>
+  <line x1="490" y1="60" x2="490" y2="84" stroke="#4a5b61" stroke-width="1.5" marker-end="url(#flecha)"/>
+
+  <!-- ColumnTransformer -->
+  <rect x="20" y="86" width="940" height="300" rx="8" fill="#f7f9f9" stroke="#9fb3ba" stroke-dasharray="5 4"/>
+  <text x="34" y="108" font-size="14" font-weight="bold">preprocesamiento · ColumnTransformer</text>
+  <text x="946" y="108" text-anchor="end" fill="#4a5b61">cada grupo de columnas pasa por su propia rama; las salidas se concatenan</text>
+
+  <g id="ramas">
+    <!-- Rama 1: tamaño -->
+    <rect x="32" y="120" width="176" height="60" rx="5" fill="#dfecf1" stroke="#19647e"/>
+    <text x="120" y="138" text-anchor="middle" font-weight="bold" font-size="13">Tamaño (3)</text>
+    <text x="120" y="154" text-anchor="middle" font-size="11">area_construida_m2,</text>
+    <text x="120" y="168" text-anchor="middle" font-size="11">area_terreno_m2, alicuota</text>
+    <rect x="32" y="200" width="176" height="40" rx="5" fill="#ffffff" stroke="#19647e"/>
+    <text x="120" y="217" text-anchor="middle">FunctionTransformer</text>
+    <text x="120" y="232" text-anchor="middle" fill="#4a5b61">log1p</text>
+    <rect x="32" y="260" width="176" height="40" rx="5" fill="#ffffff" stroke="#19647e"/>
+    <text x="120" y="277" text-anchor="middle">SimpleImputer(mediana)</text>
+    <text x="120" y="292" text-anchor="middle" fill="#4a5b61">+ indicador de faltante</text>
+    <rect x="32" y="320" width="176" height="40" rx="5" fill="#ffffff" stroke="#19647e"/>
+    <text x="120" y="345" text-anchor="middle">StandardScaler</text>
+    <line x1="120" y1="180" x2="120" y2="198" stroke="#4a5b61" marker-end="url(#flecha)"/>
+    <line x1="120" y1="240" x2="120" y2="258" stroke="#4a5b61" marker-end="url(#flecha)"/>
+    <line x1="120" y1="300" x2="120" y2="318" stroke="#4a5b61" marker-end="url(#flecha)"/>
+
+    <!-- Rama 2: numéricas -->
+    <rect x="216" y="120" width="176" height="60" rx="5" fill="#dfecf1" stroke="#19647e"/>
+    <text x="304" y="138" text-anchor="middle" font-weight="bold" font-size="13">Numéricas (5)</text>
+    <text x="304" y="154" text-anchor="middle" font-size="11">habitaciones, banos,</text>
+    <text x="304" y="168" text-anchor="middle" font-size="11">parqueaderos, antigüedad, piso</text>
+    <rect x="216" y="260" width="176" height="40" rx="5" fill="#ffffff" stroke="#19647e"/>
+    <text x="304" y="277" text-anchor="middle">SimpleImputer(mediana)</text>
+    <text x="304" y="292" text-anchor="middle" fill="#4a5b61">+ indicador de faltante</text>
+    <rect x="216" y="320" width="176" height="40" rx="5" fill="#ffffff" stroke="#19647e"/>
+    <text x="304" y="345" text-anchor="middle">StandardScaler</text>
+    <line x1="304" y1="180" x2="304" y2="258" stroke="#4a5b61" marker-end="url(#flecha)"/>
+    <line x1="304" y1="300" x2="304" y2="318" stroke="#4a5b61" marker-end="url(#flecha)"/>
+
+    <!-- Rama 3: ubicación -->
+    <rect x="400" y="120" width="176" height="60" rx="5" fill="#dfecf1" stroke="#19647e"/>
+    <text x="488" y="138" text-anchor="middle" font-weight="bold" font-size="13">Ubicación (3)</text>
+    <text x="488" y="154" text-anchor="middle" font-size="11">latitud, longitud, sector</text>
+    <text x="488" y="168" text-anchor="middle" font-size="11" fill="#4a5b61">(sector también va a one-hot)</text>
+    <rect x="400" y="200" width="176" height="100" rx="5" fill="#ffffff" stroke="#19647e" stroke-width="2"/>
+    <text x="488" y="218" text-anchor="middle" font-weight="bold">ImputadorCoordenadas</text>
+    <text x="488" y="233" text-anchor="middle" font-size="11" fill="#4a5b61">transformador propio</text>
+    <text x="488" y="252" text-anchor="middle" font-size="11">lat/lon faltante → centroide</text>
+    <text x="488" y="266" text-anchor="middle" font-size="11">(mediana) de su sector</text>
+    <text x="488" y="284" text-anchor="middle" font-size="11">+ distancia a La Carolina (km)</text>
+    <rect x="400" y="320" width="176" height="40" rx="5" fill="#ffffff" stroke="#19647e"/>
+    <text x="488" y="345" text-anchor="middle">StandardScaler</text>
+    <line x1="488" y1="180" x2="488" y2="198" stroke="#4a5b61" marker-end="url(#flecha)"/>
+    <line x1="488" y1="300" x2="488" y2="318" stroke="#4a5b61" marker-end="url(#flecha)"/>
+
+    <!-- Rama 4: binarias -->
+    <rect x="584" y="120" width="176" height="60" rx="5" fill="#dfecf1" stroke="#19647e"/>
+    <text x="672" y="138" text-anchor="middle" font-weight="bold" font-size="13">Binarias (21)</text>
+    <text x="672" y="154" text-anchor="middle" font-size="11">amenidades (piscina, gimnasio…),</text>
+    <text x="672" y="168" text-anchor="middle" font-size="11">es_desarrollo, es_rentera…</text>
+    <rect x="584" y="320" width="176" height="40" rx="5" fill="#ffffff" stroke="#19647e"/>
+    <text x="672" y="345" text-anchor="middle">SimpleImputer(moda)</text>
+    <line x1="672" y1="180" x2="672" y2="318" stroke="#4a5b61" marker-end="url(#flecha)"/>
+
+    <!-- Rama 5: categóricas -->
+    <rect x="768" y="120" width="176" height="60" rx="5" fill="#dfecf1" stroke="#19647e"/>
+    <text x="856" y="138" text-anchor="middle" font-weight="bold" font-size="13">Categóricas (5)</text>
+    <text x="856" y="154" text-anchor="middle" font-size="11">sector, tipo, zona,</text>
+    <text x="856" y="168" text-anchor="middle" font-size="11">estado, canton</text>
+    <rect x="768" y="260" width="176" height="40" rx="5" fill="#ffffff" stroke="#19647e"/>
+    <text x="856" y="277" text-anchor="middle">SimpleImputer</text>
+    <text x="856" y="292" text-anchor="middle" fill="#4a5b61" font-size="11">faltante → “desconocido”</text>
+    <rect x="768" y="320" width="176" height="40" rx="5" fill="#ffffff" stroke="#19647e"/>
+    <text x="856" y="337" text-anchor="middle">OneHotEncoder</text>
+    <text x="856" y="352" text-anchor="middle" fill="#4a5b61" font-size="11">&lt; 10 anuncios → “infrecuente”</text>
+    <line x1="856" y1="180" x2="856" y2="258" stroke="#4a5b61" marker-end="url(#flecha)"/>
+    <line x1="856" y1="300" x2="856" y2="318" stroke="#4a5b61" marker-end="url(#flecha)"/>
+  </g>
+
+  <!-- Concatenación -->
+  <g fill="none" stroke="#4a5b61" stroke-width="1.2">
+    <polyline points="120,360 120,396 490,412"/>
+    <polyline points="304,360 304,396 490,412"/>
+    <polyline points="488,360 488,396 490,412"/>
+    <polyline points="672,360 672,396 490,412"/>
+    <polyline points="856,360 856,396 490,412"/>
+  </g>
+  <line x1="490" y1="412" x2="490" y2="430" stroke="#4a5b61" stroke-width="1.5" marker-end="url(#flecha)"/>
+
+  <!-- Varianza -->
+  <rect x="210" y="432" width="560" height="44" rx="6" fill="#ffffff" stroke="#19647e" stroke-width="1.5"/>
+  <text x="490" y="451" text-anchor="middle" font-size="13" font-weight="bold">varianza · VarianceThreshold()</text>
+  <text x="490" y="467" text-anchor="middle" fill="#4a5b61">quita columnas constantes en el fold → 124 características</text>
+  <line x1="490" y1="476" x2="490" y2="498" stroke="#4a5b61" stroke-width="1.5" marker-end="url(#flecha)"/>
+
+  <!-- Selección -->
+  <rect x="210" y="500" width="560" height="44" rx="6" fill="#ffffff" stroke="#19647e" stroke-width="1.5"/>
+  <text x="490" y="519" text-anchor="middle" font-size="13" font-weight="bold">seleccion · SelectPercentile(f_regression, percentile = p)</text>
+  <text x="490" y="535" text-anchor="middle" fill="#4a5b61">filtro: conserva el p % de mayor estadístico F; p lo elige Optuna (30–100 %)</text>
+
+  <!-- Bifurcación a modelos -->
+  <g fill="none" stroke="#4a5b61" stroke-width="1.2">
+    <polyline points="490,544 490,560 170,560 170,586" marker-end="url(#flecha)"/>
+    <polyline points="490,560 490,586" marker-end="url(#flecha)"/>
+    <polyline points="490,560 810,560 810,586" marker-end="url(#flecha)"/>
+  </g>
+  <text x="20" y="556" font-size="13" font-weight="bold">modelo</text>
+  <text x="20" y="572" fill="#4a5b61">(uno de los tres)</text>
+
+  <rect x="20" y="588" width="300" height="84" rx="6" fill="#f6ecdc" stroke="#9a6416" stroke-width="1.5"/>
+  <text x="170" y="608" text-anchor="middle" font-size="13" font-weight="bold">MLP · RegresorLightning</text>
+  <text x="170" y="624" text-anchor="middle" fill="#4a5b61">PyTorch Lightning, adaptador sklearn</text>
+  <text x="170" y="642" text-anchor="middle">p = 90 % → 111 entradas</text>
+  <text x="170" y="658" text-anchor="middle">1 capa oculta de 247 ReLU → salida lineal</text>
+
+  <rect x="340" y="588" width="300" height="84" rx="6" fill="#f6ecdc" stroke="#9a6416" stroke-width="1.5"/>
+  <text x="490" y="608" text-anchor="middle" font-size="13" font-weight="bold">RandomForestRegressor</text>
+  <text x="490" y="624" text-anchor="middle" fill="#4a5b61">promedio de árboles de decisión</text>
+  <text x="490" y="642" text-anchor="middle">p = 100 % → 124 entradas (sin filtro)</text>
+  <text x="490" y="658" text-anchor="middle">500 árboles, profundidad 30</text>
+
+  <rect x="660" y="588" width="300" height="84" rx="6" fill="#f6ecdc" stroke="#9a6416" stroke-width="1.5"/>
+  <text x="810" y="608" text-anchor="middle" font-size="13" font-weight="bold">Ridge (referencia)</text>
+  <text x="810" y="624" text-anchor="middle" fill="#4a5b61">modelo hedónico lineal con penalización L2</text>
+  <text x="810" y="642" text-anchor="middle">p = 100 % → 124 entradas (sin filtro)</text>
+  <text x="810" y="658" text-anchor="middle">α ≈ 0,78</text>
+
+  <!-- Salida -->
+  <g fill="none" stroke="#4a5b61" stroke-width="1.2">
+    <polyline points="170,672 170,690 490,690"/>
+    <polyline points="810,672 810,690 490,690"/>
+    <line x1="490" y1="672" x2="490" y2="704" marker-end="url(#flecha)"/>
+  </g>
+  <rect x="250" y="706" width="480" height="40" rx="6" fill="#ffffff" stroke="#4a5b61"/>
+  <text x="490" y="724" text-anchor="middle" font-size="13">predicción de log(precio)</text>
+  <text x="490" y="739" text-anchor="middle" fill="#4a5b61">RMSLE en validación; exp(·) → USD solo en la evaluación final</text>
+
+  <text x="490" y="780" text-anchor="middle" font-size="12" fill="#4a5b61">Todos los pasos se ajustan (fit) solo con el fold de entrenamiento; en validación y prueba solo se aplican (transform).</text>
+</svg>
